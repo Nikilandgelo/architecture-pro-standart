@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net">
   <diagram name="Page-1" id="gZaHEXI__MYQB64ngZVp">
-    <mxGraphModel dx="-4097" dy="4195" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="1150" dy="6390" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -461,6 +461,25 @@
             </mxGeometry>
           </mxCell>
         </object>
+        <object placeholders="1" c4Type="Relationship" id="pNgpfKd4T-ztWWqqWgkB-1">
+          <mxCell edge="1" parent="1" source="F-HmwrPebeMSSJQTJRDE-166" style="endArrow=blockThin;html=1;fontSize=10;fontColor=light-dark(#404040,#ADCAD5);strokeWidth=1;endFill=1;strokeColor=light-dark(#828282,#ADCAD5);elbow=vertical;metaEdit=1;endSize=14;startSize=14;jumpStyle=arc;jumpSize=16;rounded=0;edgeStyle=orthogonalEdgeStyle;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;fontFamily=Architects Daughter;fontSource=https://fonts.googleapis.com/css?family=Architects+Daughter;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.389;entryY=0.999;entryDx=0;entryDy=0;entryPerimeter=0;" target="F-HmwrPebeMSSJQTJRDE-164">
+            <mxGeometry relative="1" width="240" as="geometry">
+              <Array as="points">
+                <mxPoint x="14881.52" y="3171" />
+                <mxPoint x="12380.28" y="3171" />
+                <mxPoint x="12380.28" y="2834" />
+                <mxPoint x="12380.72" y="2834" />
+              </Array>
+              <mxPoint x="13749" y="2828" as="sourcePoint" />
+              <mxPoint x="12484" y="2834" as="targetPoint" />
+            </mxGeometry>
+          </mxCell>
+        </object>
+        <mxCell id="pNgpfKd4T-ztWWqqWgkB-2" connectable="0" parent="pNgpfKd4T-ztWWqqWgkB-1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Architects Daughter;fontSource=https://fonts.googleapis.com/css?family=Architects+Daughter;labelBackgroundColor=light-dark(#072F30,#072F30);" value="Передача обращения от оператора кол центра" vertex="1">
+          <mxGeometry relative="1" x="0.0301" y="5" as="geometry">
+            <mxPoint x="-1" y="33" as="offset" />
+          </mxGeometry>
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
