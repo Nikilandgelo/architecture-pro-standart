@@ -1,0 +1,42 @@
+@startuml
+!ROUNDED_STYLE=1
+!include <C4/C4_Context>
+
+LAYOUT_TOP_DOWN()
+
+
+Person(client, "Клиент")
+Person(operator, "Оператор кол-центра")
+Person(backOfficeEmployee, "Сотрудник бэк-офиса депозитов")
+
+
+System(website, "Сайт")
+System(internetBank, "Интернет-банк")
+System(depositSystem, "Депозитная система")
+System(callCenter, "Система кол-центра")
+System(abs, "АБС")
+System(absFacade, "Фасад для чтения редко меняющихся данных из АБС")
+System(smsGateway, "СМС-шлюз")
+
+
+Rel(client, website, "Просматривает депозиты, подаёт заявку")
+Rel(client, internetBank, "Просматривает депозиты, подаёт заявку")
+
+Rel(website, depositSystem, "Регистрирует заявку")
+Rel(internetBank, depositSystem, "Регистрирует заявку")
+Rel(website, absFacade, "Запрашивает каталог депозитов с актуальными ставки")
+Rel(internetBank, absFacade, "Запрашивает каталог депозитов с актуальными ставки")
+
+Rel(absFacade, abs, "Читает депозиты с актуальными ставки, справочные данные и т.д, сохраняя эти данные в кэш")
+
+BiRel(depositSystem, callCenter, "Передается заявка оператору, впоследствии передается результат звонка обратно")
+Rel(depositSystem, smsGateway, "Отправка СМС клиенту")
+Rel_D(depositSystem, abs, "Получает события об изменениях клиентов и счетов (CDC через Kafka) для сохранения у себя в бд и последующего расчета персонализированных ставок")
+
+Rel_U(operator, callCenter, "Получает и обрабатывает заявку")
+
+Rel_U(backOfficeEmployee, abs, "Открывает депозит")
+Rel_U(backOfficeEmployee, depositSystem, "Видит очередь онлайн заявок, по итогам проверки отмечает заявку обработанной")
+
+footer PlantUML v.%version(), C4-PlantUML v.C4Version()
+@enduml
