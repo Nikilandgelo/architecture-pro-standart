@@ -15,7 +15,7 @@ System(internetBank, "Интернет-банк")
 System(depositSystem, "Депозитная система")
 System(callCenter, "Система кол-центра")
 System(abs, "АБС")
-System(absFacade, "Фасад для чтения редко меняющихся данных из АБС")
+System(absFacade, "Сервис справочных данных АБС")
 System(smsGateway, "СМС-шлюз")
 
 

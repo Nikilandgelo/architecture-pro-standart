@@ -41,8 +41,8 @@ System_Boundary(absBoundary, "АБС") {
     Rel_U(cdcConnector, kafka, "Interact")
 }
 
-System_Boundary(absFacadeBoundary, "Фасад чтения данных АБС") {
-    Container(absFacadeApi, "REST API", "Java Spring Boot", "Отдает депозиты с актуальными ставки, справочные данные и т.д", java)
+System_Boundary(absFacadeBoundary, "Сервис справочных данных АБС") {
+    Container(absFacadeApi, "REST API", "Java Spring Boot", "Возвращает депозиты с актуальными ставки, справочные данные и т.д", java)
     ContainerDb(absFacadeCache, "Кэш", "Redis", "", redis)
 
     Rel(absFacadeApi, absFacadeCache, "Read/write cache")
