@@ -1,0 +1,43 @@
+@startuml
+!ROUNDED_STYLE=1
+!include <C4/C4_Context>
+
+LAYOUT_TOP_DOWN()
+
+Person(client, "Клиент")
+Person(frontOfficeEmployee, "Сотрудник фронт-офиса")
+Person(creditEmployee, "Сотрудник управления кредитования")
+
+System(website, "Сайт")
+System(internetBank, "Интернет-банк")
+System(creditPipeline, "Кредитный конвейер")
+System(abs, "АБС")
+System(scoring, "Система кредитного скоринга")
+System(precalcScoring, "Сервис предрасчёта скоринга")
+System(smsGateway, "СМС-шлюз")
+System_Ext(creditBureau, "Бюро кредитных историй")
+
+Rel(client, website, "Просматривает кредиты, подаёт заявку")
+Rel(client, internetBank, "Просматривает кредиты, подаёт заявку (по предодобренному предложению или нет)")
+
+Rel(website, creditPipeline, "Каталог кредитов, регистрация заявки")
+Rel(internetBank, creditPipeline, "Каталог кредитов, регистрация заявки")
+Rel(internetBank, precalcScoring, "Проверяет наличие предодобренного предложения")
+
+Rel(creditPipeline, scoring, "Синхронный запрос (БКИ-only) при подаче с паспортными данными")
+Rel(creditPipeline, scoring, "Запрос в комбинированном режиме при упрощённой обработке")
+Rel(scoring, creditBureau, "Запрашивает данные")
+Rel(scoring, precalcScoring, "Проверяет валидность предрасчёта")
+
+Rel(precalcScoring, abs, "Получает изменения клиентов (CDC)")
+
+Rel(frontOfficeEmployee, creditPipeline, "Просматривает онлайн-заявки (ограниченный доступ)")
+Rel(frontOfficeEmployee, abs, "Создаёт заявку для нового клиента без онлайн-заявки")
+Rel(abs, creditPipeline, "Передаёт заявки (раз в сутки)")
+
+Rel(creditEmployee, creditPipeline, "Обрабатывает заявку")
+
+Rel(creditPipeline, smsGateway, "Уведомления клиенту")
+
+footer PlantUML v.%version(), C4-PlantUML v.C4Version()
+@enduml

@@ -1,0 +1,95 @@
+@startuml
+!ROUNDED_STYLE=1
+!include <C4/C4_Container>
+!include <logos/kafka>
+!include <logos/oracle>
+!include <logos/mysql>
+!include <logos/dotnet>
+!include <logos/java>
+!include <logos/react>
+!include <logos/redis>
+
+LAYOUT_TOP_DOWN()
+
+Person(client, "Клиент")
+Person(operator, "Оператор кол-центра")
+Person(backOfficeEmployee, "Сотрудник бэк-офиса депозитов")
+
+
+System(website, "Веб Сайт", "PHP и React.js")
+System(callCenter, "Система кол центра")
+System(smsGateway, "СМС-шлюз")
+
+
+ContainerQueue(kafka, "Kafka", "Apache Kafka", "CDC-топики", kafka)
+
+
+System_Boundary(internetBankBoundary, "Интернет-банк") {
+    Container(ibMonolith, "Веб-приложение (монолит)", "ASP.NET MVC 4.5, .NET Framework 4.5", "Платежи, текущие счета, отдаёт HTML страницу депозитов — платформа подрядчика", dotnet)
+    ContainerDb(ibDb, "База данных", "MS SQL", "", mysql)
+
+    Rel(ibMonolith, ibDb, "Читает/пишет платежи, счета")
+}
+
+System_Boundary(absBoundary, "АБС") {
+    Container(absClient, "Desktop-клиент", "Delphi", "Используется отделениями фронт офиса и бэк офиса. Доработан отдельной вкладкой для онлайн заявок")
+    Container(cdcConnector, "CDC-коннектор", "Debezium", "Читает redo-логи Oracle, публикует изменения в Kafka")
+    ContainerDb(absDb, "База данных", "Oracle, PL/SQL", "", oracle)
+
+    Rel(absClient, absDb, "Interact")
+    Rel(cdcConnector, absDb, "Читает redo-логи")
+    Rel_U(cdcConnector, kafka, "Interact")
+}
+
+System_Boundary(absFacadeBoundary, "Сервис справочных данных АБС") {
+    Container(absFacadeApi, "REST API", "Java Spring Boot", "Возвращает депозиты с актуальными ставки, справочные данные и т.д", java)
+    ContainerDb(absFacadeCache, "Кэш", "Redis", "", redis)
+
+    Rel(absFacadeApi, absFacadeCache, "Read/write cache")
+    Rel(absFacadeApi, absDb, "Читает по расписанию с большим интервалом редко меняющиеся данные")
+}
+
+System_Boundary(depositBoundary, "Депозитная система") {
+    Container(depositApi, "Депозитный Конвейер", "REST Java Spring Boot", "Прием заявок с Сайта/Интернет-банка, общение с системой кол центра, отметка обработки", java)
+    Container(adminUi, "Админка правил", "React", "Настройка условий персонализации бизнес-пользователями", react)
+    Container(personalization, "Сервис персонализации ставок", "REST Java Spring Boot", "REST API и расчет по таймеру исходя из ранее созданных правил на основе реплики нужных клиентских данных", java)
+    Container(cdcConsumer, "CDC-консьюмер", "", "Читает события об изменениях клиентов/счетов из Kafka")
+    ContainerDb(depositRequestsDb, "База данных", "MS SQL", "", mysql)
+    ContainerDb(personalizationDb, "База данных", "MS SQL", "", mysql)
+
+    Rel(depositApi, depositRequestsDb, "Читает/пишет заявки")
+    Rel(adminUi, personalization, "Настраивает правила персонализации")
+    Rel(personalization, personalizationDb, "Читает правила и реплику данных клиентов")
+    Rel_U(cdcConsumer, kafka, "Interact")
+    Rel(cdcConsumer, personalizationDb, "Обновляет реплику некоторых данных клиентов")
+
+}
+
+' Клиент и точки входа
+Rel(client, website, "Просматривает депозиты, подаёт заявку")
+Rel(client, ibMonolith, "Открывает страницу депозитов")
+
+' Прямые вызовы из браузера клиента
+Rel(client, absFacadeApi, "Каталог продуктов, базовые ставки")
+Rel(client, depositApi, "Подаёт заявку, статус")
+Rel(client, personalization, "Персонализированная ставка")
+
+' Сайт
+Rel(website, absFacadeApi, "Каталог продуктов, базовые ставки")
+Rel(website, depositApi, "Регистрирует заявку")
+
+' Депозитный конвейер <-> Кол-центр
+BiRel_R(depositApi, callCenter, "Передается заявка оператору, впоследствии передается результат звонка обратно")
+Rel(operator, callCenter, "Получает и обрабатывает заявку")
+
+' Бэк-офис
+Rel(backOfficeEmployee, absClient, "Работает с заявками и депозитами")
+Rel(absClient, depositApi, "Получение онлайн-заявок, отметка обработки")
+
+' СМС
+Rel(depositApi, smsGateway, "Уведомления клиенту")
+
+
+
+footer PlantUML v.%version(), C4-PlantUML v.C4Version()
+@enduml
