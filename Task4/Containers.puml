@@ -1,0 +1,36 @@
+@startuml
+!ROUNDED_STYLE=1
+!include <C4/C4_Container>
+!include <logos/java>
+!include <logos/redis>
+!include <logos/oracle>
+
+LAYOUT_TOP_DOWN()
+
+
+Person(operator, "Оператор кол-центра")
+Person(partnerOperator, "Оператор партнёрского кол-центра")
+
+System(callCenter, "Система кол-центра")
+System_Ext(partnerCallCenter, "Система партнёрского кол-центра")
+System(abs, "АБС")
+
+
+System_Boundary(absFacadeBoundary, "Сервис справочных данных АБС") {
+    Container(absFacadeApi, "REST API", "Java Spring Boot", "Отдаёт депозиты с актуальными ставками, справочные данные", java)
+    ContainerDb(absFacadeCache, "Кэш", "Redis", "", redis)
+    Container(sftpExporter, "SFTP-экспортер", "Java", "Формирует файл с актуальными ставками и отправляет по SFTP (раз в сутки)")
+
+    Rel(absFacadeApi, absFacadeCache, "Read/write cache")
+    Rel(absFacadeApi, abs, "Читает по расписанию с большим интервалом редко меняющиеся данные")
+    Rel(sftpExporter, absFacadeCache, "Читает актуальные ставки")
+}
+
+Rel(operator, callCenter, "Консультирует клиента")
+Rel(callCenter, absFacadeApi, "Запрашивает актуальные ставки")
+
+Rel(sftpExporter, partnerCallCenter, "Отправляет файл со ставками (SFTP)")
+Rel(partnerOperator, partnerCallCenter, "Консультирует клиента по данным из файла")
+
+footer PlantUML v.%version(), C4-PlantUML v.C4Version()
+@enduml

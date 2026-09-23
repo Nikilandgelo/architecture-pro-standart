@@ -1,0 +1,31 @@
+@startuml
+!ROUNDED_STYLE=1
+!include <C4/C4_Context>
+
+LAYOUT_TOP_DOWN()
+
+
+Person(client, "Клиент")
+Person(operator, "Оператор кол-центра")
+Person(partnerOperator, "Оператор партнёрского кол-центра")
+
+System(callCenter, "Система кол-центра")
+System_Ext(partnerCallCenter, "Система партнерского кол-центра")
+System(abs, "АБС")
+System(absFacade, "Сервис справочных данных АБС")
+
+
+Rel(client, callCenter, "Звонит для консультации")
+Rel(client, partnerCallCenter, "Звонит для консультации")
+
+Rel(operator, callCenter, "Консультирует клиента")
+Rel(partnerOperator, partnerCallCenter, "Консультирует клиента")
+
+Rel(callCenter, absFacade, "Запрашивает актуальные ставки")
+Rel(absFacade, partnerCallCenter, "Передает файл со ставками раз в сутки")
+
+Rel(absFacade, abs, "Читает депозиты с актуальными ставки, справочные данные и т.д из кэша")
+
+
+footer PlantUML v.%version(), C4-PlantUML v.C4Version()
+@enduml

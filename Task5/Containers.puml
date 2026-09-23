@@ -1,0 +1,84 @@
+@startuml
+!ROUNDED_STYLE=1
+!include <C4/C4_Container>
+!include <logos/java>
+!include <logos/oracle>
+!include <logos/kafka>
+!include <logos/python>
+!include <logos/postgresql>
+
+LAYOUT_TOP_DOWN()
+
+Person(client, "Клиент")
+Person(frontOfficeEmployee, "Сотрудник фронт-офиса")
+Person(creditEmployee, "Сотрудник управления кредитования")
+
+
+System(website, "Сайт")
+System(internetBank, "Интернет-банк")
+System(smsGateway, "СМС-шлюз")
+System_Ext(creditBureau, "Бюро кредитных историй")
+
+ContainerQueue(kafka, "Kafka", "Apache Kafka", "CDC-топики (переиспользуется из депозитного домена)", kafka)
+
+System_Boundary(absBoundary, "АБС") {
+    Container(absClient, "Desktop-клиент", "Delphi", "Используется отделениями для создания заявок нового клиента без онлайн-заявки")
+    ContainerDb(absDb, "База данных", "Oracle, PL/SQL", "", oracle)
+    Container(cdcConnector, "CDC-коннектор", "Debezium", "Читает redo-логи Oracle, публикует изменения в Kafka")
+
+    Rel(absClient, absDb, "Interact")
+    Rel(cdcConnector, absDb, "Читает redo-логи")
+    Rel(cdcConnector, kafka, "Публикует изменения")
+}
+
+System_Boundary(creditPipelineBoundary, "Кредитный конвейер") {
+    Container(creditApi, "REST API", "Camunda, Java", "Каталог кредитов, регистрация заявок, синхронный вызов скоринга, ограниченный UI просмотра для фронт-офиса", java)
+    Container(bpmnEngine, "BPMN-обработчики", "Camunda", "Бизнес-логика обработки заявок")
+    ContainerDb(creditPipelineDb, "База данных", "Oracle", "", oracle)
+
+    Rel(creditApi, bpmnEngine, "Запускает процессы")
+    Rel(bpmnEngine, creditPipelineDb, "Читает/пишет заявки")
+}
+
+System_Boundary(scoringBoundary, "Система кредитного скоринга") {
+    Container(scoringApi, "REST API", "Python, Flask", "Собирает данные под нужный режим (БКИ-only / комбинированный / полный). Полный режим подразумевает вызов внутреннего ML-сервиса", python)
+    Container(mlService, "Сервис машинного обучения", "Python", "Считает итоговый скоринг на основе модели и переданных данных", python)
+    ContainerDb(scoringDb, "База данных", "PostgreSQL", "", postgresql)
+
+    Rel(scoringApi, mlService, "Вызывает только в полном режиме (существующий клиент без валидного предрасчёта)")
+    Rel(scoringApi, scoringDb, "Читает/пишет")
+}
+
+System_Boundary(precalcBoundary, "Сервис предрасчёта скоринга") {
+    Container(precalcApi, "REST API", "Python", "Отдаёт предодобренные предложения, проверяет валидность предрасчёта по id", python)
+    Container(precalcMlService, "Сервис машинного обучения", "Python", "Делает предрасчёт скора по реплицированным данным клиентов (копия модели)", python)
+    Container(cdcConsumer, "CDC-консьюмер", "Python", "Читает изменения клиентов из Kafka и обновляет их в локальной БД")
+    ContainerDb(precalcDb, "База данных", "PostgreSQL", "Реплика клиентов, результаты предрасчёта", postgresql)
+
+    Rel(precalcMlService, precalcDb, "Читает реплицированные данные клиентов, пишет результаты")
+    Rel(precalcApi, precalcDb, "Читает результаты по id клиента или скора")
+    Rel_U(cdcConsumer, kafka, "Консьюмит изменения")
+    Rel(cdcConsumer, precalcDb, "Обновляет реплику клиентов")
+}
+
+Rel(client, website, "Просматривает, подаёт заявку")
+Rel(client, internetBank, "Просматривает, подаёт заявку")
+
+Rel(website, creditApi, "Каталог, регистрация заявки")
+Rel(internetBank, creditApi, "Каталог, регистрация заявки")
+Rel(internetBank, precalcApi, "Просмотр предодобренных предложений для клиента")
+
+Rel(bpmnEngine, scoringApi, "Синхронный / комбинированный запрос")
+Rel_R(scoringApi, creditBureau, "Запрашивает данные")
+Rel(scoringApi, precalcApi, "Проверяет валидность предрасчёта")
+
+Rel(frontOfficeEmployee, creditApi, "Просмотр онлайн-заявок (ограниченный доступ)")
+Rel(frontOfficeEmployee, absClient, "Создаёт новую заявку при отсутствии ранее созданной клиентом")
+Rel(absDb, creditPipelineDb, "Передача заявок (батч, раз в сутки)")
+
+Rel(creditEmployee, bpmnEngine, "Обрабатывает заявку")
+
+Rel(creditApi, smsGateway, "Уведомления клиенту")
+
+footer PlantUML v.%version(), C4-PlantUML v.C4Version()
+@enduml
